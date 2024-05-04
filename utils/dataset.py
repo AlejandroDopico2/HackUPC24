@@ -7,7 +7,7 @@ import numpy as np
 
 
 class ImageDataset:
-    def __init__(self, data, max_urls=None, num_workers=10, download = False) -> None:
+    def __init__(self, data, max_urls=100, num_workers=10, download = False) -> None:
         self.images = dict()
         self.download_imgs = download
         self.load_images(data, max_urls=max_urls, num_workers=num_workers)
@@ -25,7 +25,6 @@ class ImageDataset:
                 futures = []
                 url_count = 0
                 for index, row in data.iterrows():
-                    print(row)
                     for version, url in enumerate(row):
                         if url_count < num_urls_to_process:
                             if self.download_imgs:

@@ -11,7 +11,7 @@ class ImageSimilarity:
     def __init__(self, image_dataset) -> None:
         self.image_dataset = image_dataset
 
-        self.save_images(self.image_dataset.images, "original_images")
+        # self.save_images(self.image_dataset.images, "original_images")
 
     @classmethod
     def group_images(
@@ -20,8 +20,9 @@ class ImageSimilarity:
         year: int = 2024,
         season: str = "V",
         product_type: int = 0,
-        section: int = 0,
+        section: int = 3,
         download: bool = False,
+        filter: bool = True,
     ):
         # Define data types for each column in the DataFrame
         dtype_dict = {
@@ -43,42 +44,28 @@ class ImageSimilarity:
             df["product_type"] = pd.to_numeric(df["product_type"])
 
             # Filtrar el DataFrame basado en las condiciones especificadas
-            filter_condition = (
-                (df["year"] == year)
-                & (df["season"] == season)
-                & (df["product_type"] == product_type)
-                & (df["section"] == section)
-            )
 
-            filtered_df = df[filter_condition]
+            if filter:
+                filter_condition = (
+                    (df["year"] == year)
+                    & (df["season"] == season)
+                    & (df["product_type"] == product_type)
+                    & (df["section"] == section)
+                )
+
+                df = df[filter_condition]
 
         except Exception as e:
             print(f"Error occurred during filtering: {e}")
             return None
         
         if download:
-            dataset = ImageDataset(filtered_df.iloc[:, :3])
+            dataset = ImageDataset(df.iloc[:, :3])
         else:
-            dataset = ImageDataset(filtered_df.iloc[:, -3:])
+            dataset = ImageDataset(df.iloc[:, -3:])
 
         return ImageSimilarity(dataset)
 
-    def compute_similarity(self, src_features, dst_features):
-        distances = []
-
-        try:
-
-            # dist = distance.euclidean(src_feature, dst_feature)
-            distances.append(dist)
-            mean = np.mean(distances)
-
-            print(f"mean is {mean}")
-
-            return mean
-
-        except Exception as e:
-            print(e)
-            print(src_features.shape, dst_feature.shape)
 
     def remove_tuples(self, dst_thresold):
         """
@@ -86,7 +73,9 @@ class ImageSimilarity:
         :param dst_thresold: threshold distance to decide if remove or not
         :return:
         """
-        self.final_images = {k: [] for k in self.image_dataset.images.keys()}
+        self.final_images = {k: dict() for k in self.image_dataset.images.keys()}
+
+        print(self.image_dataset.images.keys())
 
         print(self.image_dataset.images)
 
@@ -112,52 +101,41 @@ class ImageSimilarity:
                     selected_images.add(i2)
 
             for index in selected_images:
-                self.final_images[current_index].append(self.image_dataset.images[current_index][index])
-
-        import pickle
-        with open("final_images.pkl", "wb") as f:
-            pickle.dump(self.final_images, f)
+                # self.final_images[current_index].append(self.image_dataset.images[current_index][index])
+                print("Perro")
+                print(self.image_dataset.images[current_index][index])
+                self.final_images[current_index][index] = self.image_dataset.images[current_index][index]
 
         self.save_images(self.final_images, "final_images")
-
-
-    def plot_pairs(self, l1, l2, title):
-        filas = 2
-        columnas = 3
-
-        # Crear la figura y los ejes (subplots) para el mosaico
-        fig, axs = plt.subplots(filas, columnas, figsize=(12, 8))
-
-        # Recorrer y mostrar las imágenes de la primera lista
-        for i in range(filas):
-            for j in range(columnas):
-                if i == 0:
-                    imagen = l1[j]
-                else:
-                    imagen = l2[j]
-                axs[i, j].imshow(imagen)
-                axs[i, j].axis("off")  # Desactivar los ejes
-
-        plt.tight_layout()
-
-        plt.title(title)
-
-        plt.show()
+        self.save_dataframe(self.final_images, img_path = "imagenes_descargadas", csv_path = "first_clean.csv")
 
     def save_images(self, data, path):
 
         Path(path).mkdir(exist_ok=True, parents=True)
         for k, v in data.items():
-            print(v)
-            for idx,image in enumerate(v):
+            for idx,image in v.items():
                 image.save(f"{path}/{k}_{idx}.jpg")
+
+    def save_dataframe(self, data, img_path, csv_path):
+
+        new_df = []
+
+        for k, v in data.items():
+            row = {}
+            for idx,image in v.items():
+                current_img_path = os.path.join(f"{img_path}/imagen_{k}_v{idx+1}.jpg")
+                row[f'PATH_VERSION_{idx+1}'] = current_img_path
+
+            new_df.append(row)
+        
+        new_df = pd.DataFrame(new_df)
+
+        new_df.to_csv(csv_path, index=False)
 
 
 if __name__ == "__main__":
 
-
     features_group = ImageSimilarity.group_images(
-        "inditex_tech_data_formatted2.csv", 2024, "V", 0, 1, False
-    )
+        "inditex_tech_data_formatted3.csv", download=False, filter=True)
 
     features_group.remove_tuples(0.8)
