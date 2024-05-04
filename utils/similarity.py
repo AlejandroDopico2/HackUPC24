@@ -1,15 +1,22 @@
+import os
+
 import pandas as pd
 import numpy as np
 from dataset import ImageDataset
 from extractor import FeatureExtractor
 from scipy.spatial import distance
+from transformers import AutoImageProcessor, AutoModel
 from sklearn.metrics import pairwise
-
+import torch
 import matplotlib.pyplot as plt
+from pathlib import Path
+from skimage.metrics import structural_similarity as ssim
 
 class Similarity:
     def __init__(self, image_dataset) -> None:
         self.image_dataset = image_dataset
+
+        self.save_images(self.image_dataset.images, "../original_images")
         self.feature_extractor = FeatureExtractor()
 
         self.extract_features()
@@ -72,24 +79,18 @@ class Similarity:
 
                 extracted_features[index] = features
 
-
                 # if len(features) == 1:
                 #     features = np.expand_dims(features, axis=9)
-                print(features.shape, features.ndims)
+                # print(features.shape, features.ndim)
         self.extracted_features = extracted_features
 
-    def compute_similarity(self, src_features, dst_features, current_index, compared_index):
+    def compute_similarity(self, src_features, dst_features):
         distances = []
 
         try:
-            for src_feature in src_features:
-                for dst_feature in dst_features:
-                    # dist = distance.euclidean(src_feature, dst_feature)
-                    if not isinstance(dst_feature, list):
-                        print(dst_feature)
-                    dist = pairwise.cosine_similarity(src_feature, dst_feature)
-                    distances.append(dist)
 
+            # dist = distance.euclidean(src_feature, dst_feature)
+            distances.append(dist)
             mean = np.mean(distances)
 
             print(f"mean is {mean}")
@@ -100,19 +101,35 @@ class Similarity:
             print(e)
             print(src_features.shape, dst_feature.shape)
 
-    def remove_similar(self):
-        distance_dict = dict()
+    def remove_tuples(self, dst_thresold):
+        """
+        Only obtain one image from the tuple of each row
+        :param dst_thresold: threshold distance to decide if remove or not
+        :return:
+        """
+        self.final_images = dict()
 
-        for current_index, current_features in self.extracted_features.items():
-            for compared_index, compared_features in self.extracted_features.items():
-                if compared_index == current_index:
-                    continue
+        for current_index, features in self.extracted_features.items():
+            distance_dict = dict()
+            selected_images = set()
+            for idx, current_feature in enumerate(features[:-1]):
+                for idx_cmp,compared_feature in enumerate(features[idx+1:]):
+                    dist = ssim(current_feature, compared_feature)
+                    distance_dict[(idx, idx_cmp)] = dist
+                    print(f"distance between {idx} and {idx_cmp} is {dist}")
 
-                dist = self.compute_similarity(current_features, compared_features, current_index, compared_index)
+            for (i1, i2), distance in distance_dict.items():
 
-                distance_dict[(current_index, compared_index)] = dist
+                if distance > dst_thresold:
+                    selected_images.add(i1)
 
-        self.save_images(distance_dict)
+            for index in selected_images:
+                if index not in self.final_images:
+                    self.final_images[current_index] = []
+                self.final_images[current_index].append(self.image_dataset.images[current_index][index])
+
+        self.save_images(distance_dict, "../final_images")
+
 
     def plot_pairs(self, l1, l2, title):
         filas = 2
@@ -129,7 +146,7 @@ class Similarity:
                 else:
                     imagen = l2[j]
                 axs[i, j].imshow(imagen)
-                axs[i, j].axis('off')  # Desactivar los ejes
+                axs[i, j].axis("off")  # Desactivar los ejes
 
         # Ajustar el espaciado entre las imágenes
         plt.tight_layout()
@@ -143,37 +160,46 @@ class Similarity:
         plt.show()
 
     def normalize(self, x, min, max):
-        return (x-min) / (max - min)
+        return (x - min) / (max - min)
 
-    def save_images(self, distances):
+    def save_images(self, data, path):
 
-        distances = {k: v for k, v in distances.items() if v is not None}
+        Path(path).mkdir(exist_ok=True, parents=True)
+        for k,v in data.items():
+            for idx,image in v.items():
+                image.save(f"{path}/{k}_{idx}.jpg")
 
-        min_v = min(distances.values())
-        max_v = max(distances.values())
-
-        distances = {k: self.normalize(v, min_v, max_v) for k, v in distances.items()}
-
-        # min1, min2 = min(distances, key=distances.get)
-        # max1, max2 = max(distances, key=distances.get)
-
-        # min1 = self.image_dataset.images[min1]
-        # min2 = self.image_dataset.images[min2]
-
-        # max1 = self.image_dataset.images[max1]
-        # max2 = self.image_dataset.images[max2]
-        
-
-        for (i1, i2), distance in distances.items():
-            l1 = self.image_dataset.images[i1]
-            l2 = self.image_dataset.images[i2]
-
-            self.plot_pairs(l1, l2, distance)
+        # self.plot_pairs(l1, l2, distance)
 
 
-# Ejemplo de uso
-features_group = Similarity.group_images(
-    "inditex_tech_data_formatted.csv", 2024, "V", 0, 3
-)
+def compute_scores(emb_one, emb_two):
+    """Computes cosine similarity between two vectors."""
+    scores = torch.nn.functional.cosine_similarity(emb_one, emb_two)
+    return scores.numpy().tolist()
 
-features_group.remove_similar()
+
+def extract_embeddings(model: torch.nn.Module, images, transformation_chain):
+    """Utility to compute embeddings."""
+    device = model.device
+
+    image_batch_transformed = torch.stack(
+        [transformation_chain(image) for image in images]
+    )
+    new_batch = {"pixel_values": image_batch_transformed.to(device)}
+    with torch.no_grad():
+        embeddings = model(**new_batch).last_hidden_state[:, 0].cpu()
+    return {"embeddings": embeddings}
+
+
+if __name__ == "__main__":
+    # model_ckpt = "nateraw/vit-base-beans"
+    # processor = AutoImageProcessor.from_pretrained(model_ckpt)
+    # model = AutoModel.from_pretrained(model_ckpt)
+    #
+    # device = "cuda" if torch.cuda.is_available() else "cpu"
+
+    features_group = Similarity.group_images(
+        "../inditex_tech_data_formatted.csv", 2024, "V", 0, 3
+    )
+
+    features_group.remove_tuples(0.9)
