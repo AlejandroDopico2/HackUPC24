@@ -16,15 +16,27 @@ def clean_dataset(csv):
 
     for i in range(len(df)):
         sample = df.iloc[i,0]
-        print(sample)
+        # print(sample)
+
+        if i == 6234:
+            print("stop")
 
         if isinstance(sample, str):
             year, season, product_type, section = sample.split('///')[1].split('/')[:4]
+            try:
+                int(year)
+            except:
+                print(f"Error in row {i}")
+                year = None
+                season = None
+                product_type = None
+                section = None
 
             # add the new columns
             df.loc[i, 'year'] = year
             df.loc[i, 'season'] = season
             df.loc[i, 'product_type'] = product_type
+            df.loc[i, 'section'] = section
 
     df.to_csv('inditex_tech_data_formatted.csv', index=False)
 
