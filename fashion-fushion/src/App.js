@@ -1,40 +1,31 @@
-import logo from './logo.svg';
+import React from 'react';
+import { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { supabase } from './utils/supabase';
 import './App.css';
+import SignUp from './components/SignUp/SignUp';
+import Login from './components/Login/Login';
+import UploadMainScreen from './components/UploadMainScreen/UploadMainScreen';
 
 function App() {
-  const handleFileUpload = async (event) => {
-    event.preventDefault();
+  const [session, setSession] = useState(null);
 
-    if (event.target.files.length === 0) {
-      console.error('No file selected');
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append('file', event.target.files[0]);
-
-    const queryString = new URLSearchParams(formData).toString();
-
-    const url = `http://localhost:8000/getRelatedGarments?${queryString}`;
-
-    try {
-      const response = await fetch(url).then((response) => response.json().then((data) => console.log(data)));
-
-    } catch (error) {
-      console.error('Error uploading file:', error);
-    }
-  };
+  useEffect(() => {
+    supabase.auth.onAuthStateChange((_event, session) => {
+      setSession(session);
+    });
+  }, []);
 
   return (
-    // Get an image from the user
-    <div className="App">
-      <header className="App-header">
-        <form>
-          <input type="file" onChange={handleFileUpload} />
-          <button type="submit">Upload</button>
-        </form>
-      </header>
-    </div>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={session ? <UploadMainScreen /> : <Login />} />
+        <Route path="/" element={<Login />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<SignUp />} />
+        <Route path="/upload" element={session ? <UploadMainScreen /> : <Login />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 
