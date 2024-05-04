@@ -2,6 +2,8 @@ import os
 
 import pandas as pd
 import numpy as np
+import torch
+
 from dataset import ImageDataset
 import matplotlib.pyplot as plt
 from pathlib import Path
@@ -60,11 +62,12 @@ class ImageSimilarity:
             return None
         
         if download:
-            dataset = ImageDataset(df.iloc[:, :3])
+            dataset = ImageDataset(df.iloc[:, :3],download=download)
         else:
             dataset = ImageDataset(df.iloc[:, -3:])
 
         return ImageSimilarity(dataset)
+
 
 
     def remove_tuples(self, dst_thresold):
@@ -92,13 +95,34 @@ class ImageSimilarity:
                     distance_dict[(idx, idx+1+idx_cmp)] = dist
                     print(f"distance between {idx} and {idx+1+idx_cmp} is {dist}")
 
-            for (i1, i2), distance in distance_dict.items():
+            # 0->1, 0->2, 1->2
+            s1, s2, s3 = distance_dict.items()
 
-                if distance > dst_thresold:
-                    selected_images.add(i1)
-                else:
-                    selected_images.add(i1)
-                    selected_images.add(i2)
+            if s1[1] < dst_thresold and s2[1] < dst_thresold and s3[1] < dst_thresold:
+                selected_images.add(s1[0][0])
+                selected_images.add(s2[0][1])
+                selected_images.add(s3[0][0])
+            elif s1[1] < dst_thresold and s2[1] < dst_thresold and s3[1] >= dst_thresold:
+                selected_images.add(s1[0][0])
+                selected_images.add(s2[0][1])
+            elif s1[1] < dst_thresold and s2[1] >= dst_thresold and s3[1] < dst_thresold:
+                selected_images.add(s1[0][0])
+                selected_images.add(s3[0][0])
+            elif s1[1] >= dst_thresold and s2[1] < dst_thresold and s3[1] < dst_thresold:
+                selected_images.add(s2[0][1])
+                selected_images.add(s3[0][0])
+            elif s1[1] < dst_thresold and s2[1] >= dst_thresold and s3[1] >= dst_thresold:
+                selected_images.add(s1[0][0])
+                selected_images.add(s1[0][1])
+            elif s1[1] >= dst_thresold and s2[1] < dst_thresold and s3[1] >= dst_thresold:
+                selected_images.add(s1[0][0])
+                selected_images.add(s2[0][1])
+            elif s1[1] >= dst_thresold and s2[1] >= dst_thresold and s3[1] < dst_thresold:
+                selected_images.add(s3[0][0])
+                selected_images.add(s3[0][1])
+            elif s1[1] >= dst_thresold and s2[1] >= dst_thresold and s3[1] >= dst_thresold:
+                selected_images.add(s1[0][0])
+
 
             for index in selected_images:
                 # self.final_images[current_index].append(self.image_dataset.images[current_index][index])
@@ -133,9 +157,39 @@ class ImageSimilarity:
         new_df.to_csv(csv_path, index=False)
 
 
+def compute_scores(emb_one, emb_two):
+    """Computes cosine similarity between two vectors."""
+    scores = torch.nn.functional.cosine_similarity(emb_one, emb_two)
+    return scores.numpy().tolist()
+
+def extract_embeddings(model: torch.nn.Module, images, transformation_chain):
+    """Utility to compute embeddings."""
+    device = model.device
+    image_batch_transformed = torch.stack(
+        [transformation_chain(image) for image in images]
+    )
+    new_batch = {"pixel_values": image_batch_transformed.to(device)}
+    with torch.no_grad():
+        embeddings = model(**new_batch).last_hidden_state[:, 0].cpu()
+    return {"embeddings": embeddings}
+
+def compute_embeddings(model, images, transformation_chain):
+    """Utility to compute embeddings."""
+    device = model.device
+    image_batch_transformed = torch
+
+    extract_embeddings(model, images, transformation_chain)
+
+
 if __name__ == "__main__":
+    # transform_chain = torch.nn.Sequential(
+    #     torch.nn.Resize((512, 512)),
+    #     torch.nn.ToTensor(),
+    # )
+    #
+    # compute_embeddings()
 
-    features_group = ImageSimilarity.group_images(
-        "inditex_tech_data_formatted3.csv", download=False, filter=True)
-
-    features_group.remove_tuples(0.8)
+    # features_group = ImageSimilarity.group_images(
+    #     "inditex_tech_data_urls.csv", download=True, filter=True)
+    #
+    # features_group.remove_tuples(0.75)
