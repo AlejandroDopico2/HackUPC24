@@ -27,11 +27,11 @@ const SignIn = () => {
       <div className="form-form">
         <h2>Sign in</h2>
         <form onSubmit={handleEmailSignIn}>
-          <div className="form-group-auth">
+          <div className="form-group">
             <input type="email" id="email" name="email" required />
             <label htmlFor="email">Email</label>
           </div>
-          <div className="form-group-auth">
+          <div className="form-group">
             <input type="password" id="password" name="password" required />
             <label htmlFor="password">Password</label>
           </div>

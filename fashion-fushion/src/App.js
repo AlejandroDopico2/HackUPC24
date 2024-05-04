@@ -20,12 +20,13 @@ function App() {
     });
   }, []);
 
+  const email = session ? session.user.email : 'Anonymous User';
+
   return (
     <BrowserRouter>
-      <SideMenu />
+      <SideMenu userEmail={email}/>
       <Routes>
-        <Route path="/" element={session ? <UploadMainScreen /> : <Login />} />
-        <Route path="/" element={<Login />} />
+        <Route path="/" element={session ? <Closet /> : <Login />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/upload" element={session ? <UploadMainScreen /> : <Login />} />

@@ -31,36 +31,28 @@ const UploadClothesForm = () => {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <label>
-        Type of garment:
-        <select value={garmentType} onChange={e => setGarmentType(e.target.value)}>
-          <option value="">--Select a garment type--</option>
-          {Object.entries(garmentTypes).map(([key, value]) => (
-            <option key={key} value={value}>{key}</option>
-          ))}
-        </select>
-      </label>
-      <label>
-        Season:
-       <select value={seasons} onChange={e => setSeasons(e.target.value)}>
-          <option value="">--Select a season--</option>
-          {Object.entries(seasons).map(([key, value]) => (
-            <option key={key} value={value}>{key}</option>
-          ))}
-        </select>
-      </label>
-      <label>
-        Color:
-       <select value={colors} onChange={e => setColors(e.target.value)}>
-          <option value="">--Select a color--</option>
-          {Object.entries(colors).map(([key, value]) => (
-            <option key={key} value={value}>{key}</option>
-          ))}
-        </select>
-      </label>
-      <input type="submit" value="Upload" />
-    </form>
+    <div className="form-container">
+      <form className="form-form">
+        <h2>Upload Clothes</h2>
+        <div className="form-group">
+          <input type="text" id="clothesName" name="clothesName" required />
+          <label htmlFor="clothesName">Clothes Name</label>
+        </div>
+        <div className="form-group">
+          <input type="text" id="clothesType" name="clothesType" required />
+          <label htmlFor="clothesType">Clothes Type</label>
+        </div>
+        <div className="form-group">
+          <input type="text" id="clothesSize" name="clothesSize" required />
+          <label htmlFor="clothesSize">Clothes Size</label>
+        </div>
+        <div className="form-group">
+          <input type="text" id="clothesColor" name="clothesColor" required />
+          <label htmlFor="clothesColor">Clothes Color</label>
+        </div>
+        <button type="submit">Upload</button>
+      </form>
+    </div>
   );
 };
 
