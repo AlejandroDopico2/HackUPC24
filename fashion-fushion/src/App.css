@@ -45,3 +45,69 @@ button {
 button:hover {
   background-color: #333;
 }
+
+.error-message {
+  color: red;
+  margin-bottom: 10px;
+}
+
+/* Containers */
+.form-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+.form-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  align-items: center;
+}
+
+.form-form h2 {
+  text-align: center;
+}
+
+.form-form-group {
+  display: flex;
+  flex-direction: row;
+  gap: 10px;
+}
+
+/*Auth specific*/
+
+.form-group-auth {
+  position: relative;
+  margin-bottom: 1rem;
+}
+
+.form-group-auth input {
+  width: 100%;
+  border: none;
+  border-bottom: 1px solid #000;
+  background: transparent;
+  outline: none;
+  height: 40px;
+  color: #000;
+  font-size: 16px;
+}
+
+.form-group-auth label {
+  position: absolute;
+  top: 0;
+  left: 0;
+  padding: 10px 0;
+  font-size: 16px;
+  color: #555;
+  transition: 0.3s ease;
+}
+
+.form-group-auth input:focus ~ label,
+.form-group-auth input:valid ~ label {
+  top: -20px;
+  left: 0;
+  color: #000;
+  font-size: 12px;
+}
