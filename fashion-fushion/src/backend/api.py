@@ -40,7 +40,6 @@ class Color(Enum):
     PINK = "pink"
 
 
-
 @app.get("/getRelatedGarments")
 async def get_related_garments(request: Request):
     body = await request.body()

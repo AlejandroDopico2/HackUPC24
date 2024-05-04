@@ -73,7 +73,7 @@ const UploadClothesForm = () => {
 
   };
 
-  return (
+   return (
     <form onSubmit={handleSubmit}>
       <label>
         Type of garment:

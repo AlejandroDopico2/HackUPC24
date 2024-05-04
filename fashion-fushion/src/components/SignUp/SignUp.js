@@ -26,11 +26,11 @@ const SignUp = () => {
       <div className="form-form">
         <h2>Create account</h2>
         <form onSubmit={handleEmailSignUp}>
-          <div className="form-group-auth">
+          <div className="form-group">
             <input type="email" id="email" name="email" required />
             <label htmlFor="email">Email</label>
           </div>
-          <div className="form-group-auth">
+          <div className="form-group">
             <input type="password" id="password" name="password" required />
             <label htmlFor="password">Password</label>
           </div>

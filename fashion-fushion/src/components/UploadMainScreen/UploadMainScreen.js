@@ -35,17 +35,15 @@ function UploadMainScreen() {
 
   return (
     <div className="App">
-      <header className="App-header">
+      <header>
         {!session ? (
           <Login />
         ) : (
-          <div>
-            <h2>Logged in as {session.user.email}</h2>
+          <div className="form-container">
             <form>
               <input type="file" onChange={handleFileUpload} />
               <button type="submit">Upload</button>
             </form>
-            <button onClick={() => supabase.auth.signOut()}>Sign out</button>
           </div>
         )}
       </header>

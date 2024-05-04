@@ -6,7 +6,6 @@ import './App.css';
 import Closet from "./components/Closet/Closet";
 import Favourites from "./components/Favourites/Favourites";
 import SideMenu from "./components/SideMenu/SideMenu";
-import FileInput from "./components/FileInput/FileInput";
 import UploadClothesForm from "./components/UploadClothesForm/UploadClothesForm";
 import SignUp from './components/SignUp/SignUp';
 import Login from './components/Login/Login';
@@ -21,12 +20,13 @@ function App() {
     });
   }, []);
 
+  const email = session ? session.user.email : 'Anonymous User';
+
   return (
     <BrowserRouter>
-      <SideMenu />
+      <SideMenu userEmail={email}/>
       <Routes>
-        <Route path="/" element={session ? <UploadMainScreen /> : <Login />} />
-        <Route path="/" element={<Login />} />
+        <Route path="/" element={session ? <Closet /> : <Login />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<SignUp />} />
         <Route path="/upload" element={session ? <UploadMainScreen /> : <Login />} />
