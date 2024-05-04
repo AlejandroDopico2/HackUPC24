@@ -3,20 +3,13 @@ import './App.css';
 
 function App() {
   return (
+    // Get an image from the user
     <div className="App">
       <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
+        <form>
+          <input type="file" />
+          <button>Upload</button>
+        </form>
       </header>
     </div>
   );
