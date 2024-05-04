@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { supabase } from './utils/supabase';
 import './App.css';
-import { BrowserRouter as Router, Routes, Route, Link } from 'react-router-dom';
 import Closet from "./components/Closet/Closet";
 import Favourites from "./components/Favourites/Favourites";
 import SideMenu from "./components/SideMenu/SideMenu";
