@@ -8,6 +8,7 @@ import numpy as np
 class ImageDataset:
     def __init__(self, data, max_urls=30000, num_workers=15, download=False) -> None:
         self.images = dict()
+        print(download)
         self.download_imgs = download
         self.load_images(data, max_urls=max_urls, num_workers=num_workers)
 
@@ -18,7 +19,6 @@ class ImageDataset:
             min(total_urls, max_urls) if max_urls is not None else total_urls
         )
 
-        # ThreadPoolExecutor with max 10 threads
         with concurrent.futures.ThreadPoolExecutor(max_workers=num_workers) as executor:
             with tqdm(total=num_urls_to_process, desc="Downloading Images") as pbar:
                 futures = []
@@ -61,6 +61,7 @@ class ImageDataset:
         try:
             response = requests.get(url)
 
+
             if response.status_code == 200:
                 image = Image.open(BytesIO(response.content)).convert("RGB")
                 image = image.resize((512, 512))
@@ -69,6 +70,7 @@ class ImageDataset:
 
                 if index not in self.images:
                     self.images[index] = []
+                image = image.resize((512, 512))
                 self.images[index].append(image)
 
         except Exception as e:
