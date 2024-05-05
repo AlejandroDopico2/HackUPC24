@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from "../../utils/supabase";
+import { useNavigate } from 'react-router-dom';
 
 const UploadClothesForm = () => {
+  const navigate = useNavigate();
+  const [errorMessage, setErrorMessage] = useState('');
   const [garmentType, setGarmentType] = useState('');
   const [season, setSeason] = useState('');
   const [seasons, setSeasons] = useState('');
@@ -36,42 +39,45 @@ const UploadClothesForm = () => {
   const handleImageChange = async (e) => {
    setImage(e.target.files[0]);
    console.log(image);
-
   };
 
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-
     console.log(`Garment Type: ${garmentType}, Season: ${season}, Color: ${color}`);
     console.log(`Image: `, image);
 
-  supabase.storage.from('images2').upload( image.name, image).then(({data, error}) => {
-    if (error) {
-        console.error('There was an error uploading the image:', error.message);
-        return;
-    }
+    supabase.storage.from('images2').upload( image.name, image).then(({data, error}) => {
+      if (error) {
+          setErrorMessage(error.message);
+          console.error('There was an error uploading the image:', error.message);
+          return;
+      }
 
-    supabase
-        .from('Garment')
-        .insert([
-            {
-                type: garmentType.valueOf(),
-                season: season.valueOf(),
-                color: color.valueOf(),
-                image: data.fullPath,
-                user_id: user.id
-            },
-        ])
-        .then(({data: insertData, error: insertError}) => {
-            if (insertError) {
-                console.error('There was an error saving the garment:', insertError.message);
-            } else {
-                console.log('Garment saved successfully:', insertData);
-            }
-        });
-});
+      supabase
+          .from('Garment')
+          .insert([
+              {
+                  type: garmentType.valueOf(),
+                  season: season.valueOf(),
+                  color: color.valueOf(),
+                  image: data.fullPath,
+                  user_id: user.id
+              },
+          ])
+          .then(({data: insertData, error: insertError}) => {
+              if (insertError) {
+                  setErrorMessage(error.message);
+                  console.error('There was an error saving the garment:', insertError.message);
+              } else {
+                  console.log('Garment saved successfully:', insertData);
+              }
+          });
+      });
 
+      if (errorMessage != '') {
+        navigate('/closet');
+      }
   };
 
    return (
@@ -107,6 +113,7 @@ const UploadClothesForm = () => {
             ))}
           </select>
         </label>
+        {errorMessage && <div className="error-message">{errorMessage}</div>}
         <div className="upload-image">
           <input type="file" onChange={handleImageChange} />
           <button type="submit">Upload</button>
