@@ -4,6 +4,7 @@ import Login from '../Login/Login';
 
 function UploadMainScreen() {
   const [image, setImage] = useState('');
+  const [originalImage, setOriginalImage] = useState('');
   let imagen = null;
   const [session, setSession] = useState(null);
 
@@ -40,6 +41,7 @@ function UploadMainScreen() {
 
     const formData = new FormData();
     formData.append('file', event.target.files[0]);
+    setOriginalImage(URL.createObjectURL(event.target.files[0]));
     
     try {
       const response = await fetch('http://127.0.0.1:8000/getRelatedGarments', {
@@ -72,9 +74,11 @@ function UploadMainScreen() {
           <div className="form-container">
             <form>
               <input type="file" onChange={handleFileUpload} />
-              <button type="submit">Upload</button>
             </form>
-            {image && <img src={`data:image/png;base64, ${image}`} width={200}/>}
+            <div className="image-divided">
+              {originalImage && <img src={originalImage} width={200}/>}
+              {image && <img src={`data:image/png;base64, ${image}`} width={200}/>}
+            </div>
           </div>
         )}
       </header>
