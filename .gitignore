@@ -1,2 +1,5 @@
 images/
 final_images/
+/env/bin/
+/env/
+/**/__pycache__/**/*
