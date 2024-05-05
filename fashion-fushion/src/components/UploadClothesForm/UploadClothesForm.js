@@ -9,7 +9,7 @@ const UploadClothesForm = () => {
   const [color, setColor] = useState('');
   const [garmentTypes, setGarmentTypes] = useState([]);
   const [image, setImage] = useState(null);
-  const [session, setSession] = useState(null);
+  const [user, setUser] = useState(null);
 
   useEffect(() => {
     fetch('http://127.0.0.1:8000/getGarmentTypes')
@@ -27,9 +27,10 @@ const UploadClothesForm = () => {
       .then(data => setColors(data))
       .catch(error => console.error('There was an error!', error));
 
-    supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-    });
+      supabase.auth.getUser().then((data) => {
+        setUser(data.data.user);
+        console.log(data.data.user)
+      });
   }, []);
 
   const handleImageChange = async (e) => {
@@ -59,7 +60,7 @@ const UploadClothesForm = () => {
                 season: season.valueOf(),
                 color: color.valueOf(),
                 image: data.fullPath,
-                user_id: session.user.uuid
+                user_id: user.id
             },
         ])
         .then(({data: insertData, error: insertError}) => {
@@ -74,40 +75,44 @@ const UploadClothesForm = () => {
   };
 
    return (
-    <form onSubmit={handleSubmit}>
-      <label>
-        Type of garment:
-        <select value={garmentType} onChange={e => setGarmentType(e.target.value)}>
-          <option value="">--Select a garment type--</option>
-          {Object.entries(garmentTypes).map(([key, value]) => (
-            <option key={key} value={value}>{key}</option>
-          ))}
-        </select>
-      </label>
-      <label>
-        Season:
-       <select value={season} onChange={e => setSeason(e.target.value)}>
-          <option value="">--Select a season--</option>
-          {Object.entries(seasons).map(([key, value]) => (
-            <option key={key} value={value}>{key}</option>
-          ))}
-        </select>
-      </label>
-      <label>
-        Color:
-       <select value={color} onChange={e => setColor(e.target.value)}>
-          <option value="">--Select a color--</option>
-          {Object.entries(colors).map(([key, value]) => (
-            <option key={key} value={value}>{key}</option>
-          ))}
-        </select>
-      </label>
-      <label>
-        Image:
-        <input type="file" onChange={handleImageChange} />
-      </label>
-      <input type="submit" value="Upload" />
-    </form>
+    <div>
+      <div className="header">
+        <h1>Upload Garment</h1>
+      </div>
+      <form onSubmit={handleSubmit} className="upload-form">
+        <label className="upload-label">
+          Type of garment
+          <select value={garmentType} onChange={e => setGarmentType(e.target.value)}>
+            <option value="">Select a garment type</option>
+            {Object.entries(garmentTypes).map(([key, value]) => (
+              <option key={key} value={value}>{key}</option>
+            ))}
+          </select>
+        </label>
+        <label className="upload-label">
+          Season
+        <select value={season} onChange={e => setSeason(e.target.value)}>
+            <option value="">Select a season</option>
+            {Object.entries(seasons).map(([key, value]) => (
+              <option key={key} value={value}>{key}</option>
+            ))}
+          </select>
+        </label>
+        <label className="upload-label">
+          Color
+        <select value={color} onChange={e => setColor(e.target.value)}>
+            <option value="">Select a color</option>
+            {Object.entries(colors).map(([key, value]) => (
+              <option key={key} value={value}>{key}</option>
+            ))}
+          </select>
+        </label>
+        <div className="upload-image">
+          <input type="file" onChange={handleImageChange} />
+          <button type="submit">Upload</button>
+        </div>
+      </form>
+    </div>
   );
 };
 
