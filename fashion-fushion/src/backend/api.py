@@ -1,13 +1,15 @@
 from enum import Enum
 
-from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.requests import Request
 from PIL import Image
-from recommender import Recommender
+from recommender.recommender import Recommender
+import os
+from fastapi import FastAPI, File, UploadFile
+from io import BytesIO
+import base64
 
 app = FastAPI()
-
 recommender = Recommender()
 
 origins = ["http://localhost:3000", "localhost:3000"]
@@ -41,22 +43,21 @@ class Color(Enum):
     PINK = "pink"
 
 
-@app.get("/getRelatedGarments")
-async def get_related_garments(request: Request):
-    body = await request.body()
+@app.post("/getRelatedGarments")
+async def get_related_garments(file: UploadFile = File(...)):
 
-    # Decode the body from bytes to string
-    image = body.decode("utf-8")
+    image = Image.open(BytesIO(await file.read()))
 
     print(type(image))
 
-    image = Image.open(image)
-
     recommended_images = recommender.recommend_similar_images(image)
 
-    print(recommended_images)
+    # Convert the image to base64
+    buffered = BytesIO()
+    image.save(buffered, format="PNG")
+    img_str = base64.b64encode(buffered.getvalue()).decode('utf-8')
 
-    return {"message": "Related garments fetched successfully"}
+    return {"image": img_str}
 
 
 @app.get("/getSeasons")

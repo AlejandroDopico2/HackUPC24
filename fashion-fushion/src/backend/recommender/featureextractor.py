@@ -60,14 +60,14 @@ class FeatureExtractor:
 
         return features.squeeze().numpy()
 
-    def compute_embeddings(self, image_files, batch_size=8):
+    def compute_embeddings(self, image_files, batch_size=1):
         embeddings = []
 
         for i in tqdm(range(0, len(image_files), batch_size)):
             batch_files = image_files[i : i + batch_size]
-            batch_images = [Image.open(img) for img in batch_files]
+            #batch_images = [Image.open(img) for img in batch_files]
 
-            batch_transformed = [self.transform(img) for img in batch_images]
+            batch_transformed = [self.transform(img) for img in batch_files]
 
             features = self.__call__(batch_transformed)
 

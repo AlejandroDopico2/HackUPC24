@@ -2,24 +2,26 @@ import os
 import pickle
 import numpy as np
 from sklearn.metrics import pairwise_distances_argmin_min
-from feature_extractor import FeatureExtractor
+from recommender.featureextractor import FeatureExtractor
 from PIL import Image
 
 
 class Recommender:
     def __init__(self) -> None:
-        with open("bin/kmeans.pkl", "rb") as f:
-            self.clustering = pickle.dump(f)
+        with open("recommender/bin/kmeans.pkl", "rb") as f:
+            self.clustering = pickle.load(f)
 
         self.feature_extractor = FeatureExtractor()
-        self.feature_extractor.load_pca("bin/pca.pkl")
+        self.feature_extractor.load_pca("recommender/bin/pca.pkl")
 
-        with open("bin/embeddings.pkl", "rb") as f:
-            self.embeddings = pickle.dump(f)
+        with open("recommender/bin/embeddings.pkl", "rb") as f:
+            self.embeddings = pickle.load(f)
 
-        dir_path = "~/HackUPC24/cluster_images"
+        dir_path = "/home/pabloboo/HackUPC24/cluster_images"
 
-        self.image_files = [os.listdir(path) for path in dir_path]
+        self.image_files = [os.path.join(dir_path, path) for path in os.listdir(dir_path)]
+        print("-----------------------")
+        print(self.image_files)
 
     def recommend_similar_images(
         self, image, num_recommendations=5
