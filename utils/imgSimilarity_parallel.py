@@ -105,32 +105,45 @@ class ImageSimilarity:
                 distance_dict[(idx, idx+1+idx_cmp)] = dist
                 print(f"distance between {idx} and {idx+1+idx_cmp} is {dist}")
 
+
             s1, s2, s3 = distance_dict.items()
 
-            if s1[1] < dst_thresold and s2[1] < dst_thresold and s3[1] < dst_thresold:
-                selected_images.add(s1[0][0])
-                selected_images.add(s2[0][1])
-                selected_images.add(s3[0][0])
-            elif s1[1] < dst_thresold and s2[1] < dst_thresold and s3[1] >= dst_thresold:
-                selected_images.add(s1[0][0])
-                selected_images.add(s2[0][1])
-            elif s1[1] < dst_thresold and s2[1] >= dst_thresold and s3[1] < dst_thresold:
-                selected_images.add(s1[0][0])
-                selected_images.add(s3[0][0])
-            elif s1[1] >= dst_thresold and s2[1] < dst_thresold and s3[1] < dst_thresold:
-                selected_images.add(s2[0][1])
-                selected_images.add(s3[0][0])
-            elif s1[1] < dst_thresold and s2[1] >= dst_thresold and s3[1] >= dst_thresold:
-                selected_images.add(s1[0][0])
-                selected_images.add(s1[0][1])
-            elif s1[1] >= dst_thresold and s2[1] < dst_thresold and s3[1] >= dst_thresold:
-                selected_images.add(s1[0][0])
-                selected_images.add(s2[0][1])
-            elif s1[1] >= dst_thresold and s2[1] >= dst_thresold and s3[1] < dst_thresold:
-                selected_images.add(s3[0][0])
-                selected_images.add(s3[0][1])
-            elif s1[1] >= dst_thresold and s2[1] >= dst_thresold and s3[1] >= dst_thresold:
-                selected_images.add(s1[0][0])
+
+            if(len(distance_dict.items()) == 3):
+
+                if s1[1] < dst_thresold and s2[1] < dst_thresold and s3[1] < dst_thresold:
+                    selected_images.add(s1[0][0])
+                    selected_images.add(s2[0][1])
+                    selected_images.add(s3[0][0])
+                elif s1[1] < dst_thresold and s2[1] < dst_thresold and s3[1] >= dst_thresold:
+                    selected_images.add(s1[0][0])
+                    selected_images.add(s2[0][1])
+                elif s1[1] < dst_thresold and s2[1] >= dst_thresold and s3[1] < dst_thresold:
+                    selected_images.add(s1[0][0])
+                    selected_images.add(s3[0][0])
+                elif s1[1] >= dst_thresold and s2[1] < dst_thresold and s3[1] < dst_thresold:
+                    selected_images.add(s2[0][1])
+                    selected_images.add(s3[0][0])
+                elif s1[1] < dst_thresold and s2[1] >= dst_thresold and s3[1] >= dst_thresold:
+                    selected_images.add(s1[0][0])
+                    selected_images.add(s1[0][1])
+                elif s1[1] >= dst_thresold and s2[1] < dst_thresold and s3[1] >= dst_thresold:
+                    selected_images.add(s1[0][0])
+                    selected_images.add(s2[0][1])
+                elif s1[1] >= dst_thresold and s2[1] >= dst_thresold and s3[1] < dst_thresold:
+                    selected_images.add(s3[0][0])
+                    selected_images.add(s3[0][1])
+                elif s1[1] >= dst_thresold and s2[1] >= dst_thresold and s3[1] >= dst_thresold:
+                    selected_images.add(s1[0][0])
+            elif(len(distance_dict.items()) == 2):
+                if s1[1] < dst_thresold:
+                    selected_images.add(s1[0][0])
+                    selected_images.add(s1[0][1])
+                elif s1[1] > dst_thresold:
+                    selected_images.add(s1[0][0])
+            else:
+                selected_images.add(0)
+
 
             for index in selected_images:
                 # self.final_images[current_index].append(self.image_dataset.images[current_index][index])
