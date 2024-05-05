@@ -3,20 +3,21 @@ from enum import Enum
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.requests import Request
+from PIL import Image
+from recommender import Recommender
 
 app = FastAPI()
 
-origins = [
-    "http://localhost:3000",
-    "localhost:3000"
-]
+recommender = Recommender()
+
+origins = ["http://localhost:3000", "localhost:3000"]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*"]
+    allow_headers=["*"],
 )
 
 
@@ -46,6 +47,14 @@ async def get_related_garments(request: Request):
 
     # Decode the body from bytes to string
     image = body.decode("utf-8")
+
+    print(type(image))
+
+    image = Image.open(image)
+
+    recommended_images = recommender.recommend_similar_images(image)
+
+    print(recommended_images)
 
     return {"message": "Related garments fetched successfully"}
 
