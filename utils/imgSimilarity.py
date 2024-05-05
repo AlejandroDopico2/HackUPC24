@@ -1,9 +1,14 @@
+import copy
 import os
 
+import PIL.Image
+import cv2
 import pandas as pd
 import numpy as np
 import torch
-
+from sklearn.cluster import KMeans
+from transformers import AutoImageProcessor, AutoModel
+import torchvision.transforms as T
 from dataset import ImageDataset
 import matplotlib.pyplot as plt
 from pathlib import Path
@@ -165,6 +170,8 @@ def compute_scores(emb_one, emb_two):
 def extract_embeddings(model: torch.nn.Module, images, transformation_chain):
     """Utility to compute embeddings."""
     device = model.device
+    if isinstance(images, PIL.Image.Image):
+        images = [images]
     image_batch_transformed = torch.stack(
         [transformation_chain(image) for image in images]
     )
@@ -173,23 +180,60 @@ def extract_embeddings(model: torch.nn.Module, images, transformation_chain):
         embeddings = model(**new_batch).last_hidden_state[:, 0].cpu()
     return {"embeddings": embeddings}
 
-def compute_embeddings(model, images, transformation_chain):
+def compute_embeddings(model, images,transformation_chain):
     """Utility to compute embeddings."""
-    device = model.device
-    image_batch_transformed = torch
 
-    extract_embeddings(model, images, transformation_chain)
+
+    query_embeddings = extract_embeddings(model, images, transformation_chain)["embeddings"]
+
+    return query_embeddings
 
 
 if __name__ == "__main__":
-    # transform_chain = torch.nn.Sequential(
-    #     torch.nn.Resize((512, 512)),
-    #     torch.nn.ToTensor(),
-    # )
-    #
-    # compute_embeddings()
 
-    # features_group = ImageSimilarity.group_images(
-    #     "inditex_tech_data_urls.csv", download=True, filter=True)
+    features_group = ImageSimilarity.group_images(
+        "inditex_tech_data_urls.csv", download=True, filter=True)
+
+    features_group.remove_tuples(0.75)
+
+    # Use gpu
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    model_ckpt = "nateraw/vit-base-beans"
+    processor = AutoImageProcessor.from_pretrained(model_ckpt)
+    model = AutoModel.from_pretrained(model_ckpt)
+
+    # Data transformation chain.
+    transformation_chain = T.Compose(
+        [
+            T.Resize((224,224)),
+            T.ToTensor(),
+            T.Normalize(mean=processor.image_mean, std=processor.image_std),
+        ]
+    )
     #
-    # features_group.remove_tuples(0.75)
+    # img1 = "data/1_3.jpg"
+    # img2 = "data/2_3.jpg"
+    # img3 = "data/3_3.jpg"
+    #
+    # imgs = [PIL.Image.open(img1), PIL.Image.open(img2), PIL.Image.open(img3)]
+    #
+    # # compute_embeddings(model, imgs[0],imgs[1:], transformation_chain)
+    #
+
+    embeddings = compute_embeddings(model, [PIL.Image.open("./final_images/"+img) for img in os.listdir("./final_images")], transformation_chain).numpy()
+
+    kmeans = KMeans(n_clusters=1, random_state=0).fit(embeddings)
+    inertia_cmp = kmeans.inertia_
+    inertias = []
+    for k in range(1,14,1):
+        kmeans = KMeans(n_clusters=k, random_state=0).fit(embeddings)
+        inertia = kmeans.inertia_
+
+        # if inertia < inertia_cmp:
+        #     break
+        inertias.append(inertia)
+        inertia_cmp = copy.copy(inertia_cmp)
+
+    plt.plot(range(1, len(inertias)+1), inertias)
+    plt.show()
