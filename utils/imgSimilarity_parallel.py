@@ -12,6 +12,7 @@ from skimage.metrics import structural_similarity as ssim
 import concurrent.futures
 import multiprocessing
 
+
 class ImageSimilarity:
     def __init__(self, image_dataset) -> None:
         self.image_dataset = image_dataset
@@ -44,12 +45,6 @@ class ImageSimilarity:
             # Leer el archivo CSV con los tipos de datos especificados
             df = pd.read_csv(csv_file, dtype=dtype_dict)
 
-            # df["year"] = pd.to_numeric(df["year"])
-            # df["section"] = pd.to_numeric(df["section"])
-            # df["product_type"] = pd.to_numeric(df["product_type"])
-
-            # Filtrar el DataFrame basado en las condiciones especificadas
-
             if filter:
                 filter_condition = (
                     (df["year"] == year)
@@ -63,10 +58,9 @@ class ImageSimilarity:
         except Exception as e:
             print(f"Error occurred during filtering: {e}")
             return None
-        
-        print(df.head())
+
         if download:
-            dataset = ImageDataset(df.iloc[:, :3],download=download)
+            dataset = ImageDataset(df.iloc[:, :3], download=download)
         else:
             dataset = ImageDataset(df.iloc[:, -3:])
 
@@ -76,21 +70,27 @@ class ImageSimilarity:
         self.final_images = {k: dict() for k in self.image_dataset.images.keys()}
 
         # Creamos un ThreadPoolExecutor con un número de hilos adecuado
-        num_threads = multiprocessing.cpu_count()  # Usa el número de núcleos disponibles
+        num_threads = (
+            multiprocessing.cpu_count()
+        )  # Usa el número de núcleos disponibles
         with concurrent.futures.ThreadPoolExecutor(max_workers=num_threads) as executor:
             # Lista para almacenar futuros
             futures = []
 
             # Procesamos cada índice de imágenes en paralelo
             for current_index, images in self.image_dataset.images.items():
-                future = executor.submit(self.process_index, current_index, images, dst_thresold)
+                future = executor.submit(
+                    self.process_index, current_index, images, dst_thresold
+                )
                 futures.append(future)
 
             # Esperamos a que todas las tareas se completen
             for future in concurrent.futures.as_completed(futures):
                 current_index, selected_images = future.result()
                 for index in selected_images:
-                    self.final_images[current_index][index] = self.image_dataset.images[current_index][index]
+                    self.final_images[current_index][index] = self.image_dataset.images[
+                        current_index
+                    ][index]
 
         self.save_images(self.final_images, "final_images")
 
@@ -100,54 +100,87 @@ class ImageSimilarity:
         distance_dict = dict()
         selected_images = set()
         for idx, current_image in enumerate(images[:-1]):
-            for idx_cmp, compared_image in enumerate(images[idx+1:]):
-                dist = ssim(np.array(current_image), np.array(compared_image), channel_axis=-1)
-                distance_dict[(idx, idx+1+idx_cmp)] = dist
+            for idx_cmp, compared_image in enumerate(images[idx + 1 :]):
+                dist = ssim(
+                    np.array(current_image), np.array(compared_image), channel_axis=-1
+                )
+                distance_dict[(idx, idx + 1 + idx_cmp)] = dist
                 print(f"distance between {idx} and {idx+1+idx_cmp} is {dist}")
 
-
-            s1, s2, s3 = distance_dict.items()
-
-
-            if(len(distance_dict.items()) == 3):
-
-                if s1[1] < dst_thresold and s2[1] < dst_thresold and s3[1] < dst_thresold:
+            if len(distance_dict.items()) == 3:
+                s1, s2, s3 = distance_dict.items()
+                if (
+                    s1[1] < dst_thresold
+                    and s2[1] < dst_thresold
+                    and s3[1] < dst_thresold
+                ):
                     selected_images.add(s1[0][0])
                     selected_images.add(s2[0][1])
                     selected_images.add(s3[0][0])
-                elif s1[1] < dst_thresold and s2[1] < dst_thresold and s3[1] >= dst_thresold:
+                elif (
+                    s1[1] < dst_thresold
+                    and s2[1] < dst_thresold
+                    and s3[1] >= dst_thresold
+                ):
                     selected_images.add(s1[0][0])
                     selected_images.add(s2[0][1])
-                elif s1[1] < dst_thresold and s2[1] >= dst_thresold and s3[1] < dst_thresold:
+                elif (
+                    s1[1] < dst_thresold
+                    and s2[1] >= dst_thresold
+                    and s3[1] < dst_thresold
+                ):
                     selected_images.add(s1[0][0])
                     selected_images.add(s3[0][0])
-                elif s1[1] >= dst_thresold and s2[1] < dst_thresold and s3[1] < dst_thresold:
+                elif (
+                    s1[1] >= dst_thresold
+                    and s2[1] < dst_thresold
+                    and s3[1] < dst_thresold
+                ):
                     selected_images.add(s2[0][1])
                     selected_images.add(s3[0][0])
-                elif s1[1] < dst_thresold and s2[1] >= dst_thresold and s3[1] >= dst_thresold:
+                elif (
+                    s1[1] < dst_thresold
+                    and s2[1] >= dst_thresold
+                    and s3[1] >= dst_thresold
+                ):
                     selected_images.add(s1[0][0])
                     selected_images.add(s1[0][1])
-                elif s1[1] >= dst_thresold and s2[1] < dst_thresold and s3[1] >= dst_thresold:
+                elif (
+                    s1[1] >= dst_thresold
+                    and s2[1] < dst_thresold
+                    and s3[1] >= dst_thresold
+                ):
                     selected_images.add(s1[0][0])
                     selected_images.add(s2[0][1])
-                elif s1[1] >= dst_thresold and s2[1] >= dst_thresold and s3[1] < dst_thresold:
+                elif (
+                    s1[1] >= dst_thresold
+                    and s2[1] >= dst_thresold
+                    and s3[1] < dst_thresold
+                ):
                     selected_images.add(s3[0][0])
                     selected_images.add(s3[0][1])
-                elif s1[1] >= dst_thresold and s2[1] >= dst_thresold and s3[1] >= dst_thresold:
+                elif (
+                    s1[1] >= dst_thresold
+                    and s2[1] >= dst_thresold
+                    and s3[1] >= dst_thresold
+                ):
                     selected_images.add(s1[0][0])
-            elif(len(distance_dict.items()) == 2):
+            elif len(distance_dict.items()) == 2:
+                s1, s2 = distance_dict.items()
                 if s1[1] < dst_thresold:
                     selected_images.add(s1[0][0])
                     selected_images.add(s1[0][1])
                 elif s1[1] > dst_thresold:
                     selected_images.add(s1[0][0])
             else:
+                s1 = distance_dict.items()
                 selected_images.add(0)
-
 
             for index in selected_images:
                 # self.final_images[current_index].append(self.image_dataset.images[current_index][index])
-                self.final_images[current_index][index] = self.image_dataset.images[current_index][index]
+                self.final_images[current_index][index] = self.image_dataset.images[
+                    current_index
+                ][index]
 
         return current_index, selected_images
 
@@ -158,11 +191,11 @@ class ImageSimilarity:
                 image.save(f"{path}/{k}_{idx}.jpg")
 
 
-
 def compute_scores(emb_one, emb_two):
     """Computes cosine similarity between two vectors."""
     scores = torch.nn.functional.cosine_similarity(emb_one, emb_two)
     return scores.numpy().tolist()
+
 
 def extract_embeddings(model: torch.nn.Module, images, transformation_chain):
     """Utility to compute embeddings."""
@@ -174,6 +207,7 @@ def extract_embeddings(model: torch.nn.Module, images, transformation_chain):
     with torch.no_grad():
         embeddings = model(**new_batch).last_hidden_state[:, 0].cpu()
     return {"embeddings": embeddings}
+
 
 def compute_embeddings(model, images, transformation_chain):
     """Utility to compute embeddings."""
@@ -192,6 +226,7 @@ if __name__ == "__main__":
     # compute_embeddings()
 
     features_group = ImageSimilarity.group_images(
-        "image_paths_sorted.csv", download=False, filter=False)
-    
+        "image_paths_sorted.csv", download=False, filter=False
+    )
+
     features_group.remove_tuples_parallel(0.75)
