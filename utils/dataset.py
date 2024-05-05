@@ -5,9 +5,8 @@ import concurrent.futures
 from tqdm import tqdm
 import numpy as np
 
-
 class ImageDataset:
-    def __init__(self, data, max_urls=100, num_workers=10, download = False) -> None:
+    def __init__(self, data, max_urls=30000, num_workers=15, download=False) -> None:
         self.images = dict()
         self.download_imgs = download
         self.load_images(data, max_urls=max_urls, num_workers=num_workers)
@@ -47,7 +46,6 @@ class ImageDataset:
 
     def load(self, url, index, version, pbar):
         try:
-        
             image = Image.open(url).convert("RGB")
             image = image.resize((512, 512))
             pbar.update(1)
@@ -59,13 +57,14 @@ class ImageDataset:
         except Exception as e:
             print(f"Error opening file {url}: {e}")
 
-
     def download(self, url, index, version, pbar):
         try:
             response = requests.get(url)
 
             if response.status_code == 200:
                 image = Image.open(BytesIO(response.content)).convert("RGB")
+                image = image.resize((512, 512))
+                image.save(f"imagenes_descargadas/image_{index}_{version}.jpg")
                 pbar.update(1)
 
                 if index not in self.images:
